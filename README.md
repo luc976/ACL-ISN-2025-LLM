@@ -1,17 +1,17 @@
  Luc Lysandre Mathys wassim
 
-### septembre à décembre: obj:faire un pacman revisité
+### Septembre à décembre: obj:faire un pacman revisité
 #sprint0: creation du requisitory, prise en main de git
 #sprint1: finalisation de l'équipe/ création du planning/ repartition des tâches/ structure logique des programmes
 #sprint2: programmation :plateau +obstacles
 #sprint3: programmation :perso + mob +système de combat/recompenses (si on a le temps)
 #sprint4: estethique final du logiciel
 
-### etat d'avancement
+### Etat d'avancement
 séance1: prise en main/ création de l'équipe/ création d'un requisitory
 séance2:
 
-### structure logique:
+### Structure logique:
 fct création d'un tableau de taille (n,m) de 0 (map)
 fct creation mur (creer des mur dans le tableau de maniere aleatoire(les mur sont des 1)
 fct blocage (arrete le mouvement quand on tape un mur)
