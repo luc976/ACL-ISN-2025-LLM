@@ -11,3 +11,5 @@
 séance1: prise en main/ création de l'équipe/ création d'un requisitory
 séance2:
 
+### structure logique:
+fct création d'un tableau de taille (n,m) de 0 (map)
