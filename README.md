@@ -14,7 +14,7 @@ séance2:
 
 ### Structure logique:
 1 fct création d'un tableau de taille (n,m) de 0 (map)
-1 fct creation mur (creer des mur dans le tableau de maniere aleatoire(les mur sont des 1)
+1 fct creation mur (creer des mur dans le tableau (les mur sont des 1))
 1 fct blocage (arrete le mouvement quand on tape un mur)
 1 fct mouvement (fait bouger le personnage avec les touches du clavier, le personnage est 2)
 1 fct mob (creer des mob les mob )
