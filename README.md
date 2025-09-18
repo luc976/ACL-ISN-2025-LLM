@@ -3,7 +3,7 @@
 ### Septembre à décembre: 
 ### obj: faire un jeu ou le heros doit survivre le plus longtemps possible dans un labyrinthe ou des monstres le poursuit 
 #sprint0: creation du requisitory, prise en main de git
-#sprint1: labiyrinthe+ deplacement du heros + presence d'un mob
+#sprint1: labyrinthe+ deplacement du heros + presence d'un mob
 #sprint2: ajout de mob selon le timer + capacité de tuer les mob+ plus timer
 #sprint3: ajout des munitions rationnement des munitions + ajout de different labyrinthe en fonction de la difficulté (vitesse/ munition/ nbr de mob)
 #sprint4: estethique propre
