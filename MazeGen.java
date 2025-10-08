@@ -27,11 +27,24 @@ public class MazeGen {
 	        int choice = scanner.nextInt();
 
 	        switch (choice) {
-	            case 1 -> { rows = 32; cols = 32; }
-	            case 2 -> { rows = 64; cols = 64; }
-	            case 3 -> { rows = 128; cols = 128; }
-	            default -> { rows = 21; cols = 21; }
-	        }
+	        case 1:
+	            rows = 32;
+	            cols = 32;
+	            break;
+	        case 2:
+	            rows = 64;
+	            cols = 64;
+	            break;
+	        case 3:
+	            rows = 128;
+	            cols = 128;
+	            break;
+	        default:
+	            rows = 21;
+	            cols = 21;
+	            break;
+	    }
+
 
 	        maze = new int[rows][cols];
 
