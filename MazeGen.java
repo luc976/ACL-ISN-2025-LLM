@@ -318,6 +318,17 @@ public class MazeGenAcces {
 
         return new int[]{newEx, newEy};
     }
+	// --- Vérifie si le héros meurt ---
+    public static boolean verifierMort(int herosX, int herosY, int ennemiX, int ennemiY) {
+        if (herosX == ennemiX && herosY == ennemiY) {
+            System.out.println("\n==============================");
+            System.out.println("💀💀💀  VOUS ÊTES MORT  💀💀💀");
+            System.out.println("==============================\n");
+            return true;
+        }
+        return false;
+    }
+
 
 
 
