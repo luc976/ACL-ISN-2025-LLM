@@ -233,6 +233,7 @@ public class MazeGenAcces {
 	            System.out.println();
 	        }
 	    }
+}
 	    /**
        * Vérifie si le déplacement du héros est bloqué.
        *
@@ -279,6 +280,45 @@ public class MazeGenAcces {
         // Sinon, déplacement possible
         return false;
     }
+	 // --- Fonction de création de l'ennemi ---
+    public static int[] creerEnnemi(int x, int y, int[][] carte) {
+        carte[y][x] = 3; // 3 = ennemi
+        return new int[]{x, y};
+    }
 
-	}
+    // --- Déplacement de l’ennemi vers le héros ---
+    public static int[] deplacementEnnemi(int ex, int ey, int hx, int hy, int[][] carte) {
+        int newEx = ex;
+        int newEy = ey;
+
+        // Déterminer la direction la plus proche du héros
+        String direction = null;
+
+        if (Math.abs(hx - ex) > Math.abs(hy - ey)) {
+            // se rapprocher horizontalement
+            if (hx < ex) direction = "gauche";
+            else if (hx > ex) direction = "droite";
+        } else {
+            // se rapprocher verticalement
+            if (hy < ey) direction = "haut";
+            else if (hy > ey) direction = "bas";
+        }
+
+        // Vérifie si le déplacement est possible
+        if (direction != null && !blocage(ex, ey, direction, carte)) {
+            carte[ey][ex] = 0; // effacer ancienne position
+            switch (direction) {
+                case "haut":    newEy--; break;
+                case "bas":     newEy++; break;
+                case "gauche":  newEx--; break;
+                case "droite":  newEx++; break;
+            }
+            carte[newEy][newEx] = 3; // nouvelle position de l’ennemi
+        }
+
+        return new int[]{newEx, newEy};
+    }
+
+
+
 
