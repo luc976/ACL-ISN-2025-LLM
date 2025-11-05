@@ -233,4 +233,52 @@ public class MazeGenAcces {
 	            System.out.println();
 	        }
 	    }
+	    /**
+       * Vérifie si le déplacement du héros est bloqué.
+       *
+       * @param x         position actuelle du héros (colonne)
+       * @param y         position actuelle du héros (ligne)
+       * @param direction "haut", "bas", "gauche" ou "droite"
+       * @param carte     matrice du terrain (0 = vide, 1 = mur)
+       * @return true si le déplacement est bloqué, false sinon
+       */
+	    public static boolean blocage(int x, int y, String direction, int[][] carte) {
+
+        int xSuiv = x;
+        int ySuiv = y;
+
+        // Calcul de la case suivante selon la direction
+        switch (direction.toLowerCase()) {
+            case "haut":
+                ySuiv = y - 1;
+                break;
+            case "bas":
+                ySuiv = y + 1;
+                break;
+            case "gauche":
+                xSuiv = x - 1;
+                break;
+            case "droite":
+                xSuiv = x + 1;
+                break;
+            default:
+                // direction inconnue = bloqué
+                return true;
+        }
+
+        // Vérifie les bords de la carte
+        if (ySuiv < 0 || ySuiv >= carte.length || xSuiv < 0 || xSuiv >= carte[0].length) {
+            return true; // en dehors de la carte
+        }
+
+        // Vérifie la présence d’un mur (1 = obstacle)
+        if (carte[ySuiv][xSuiv] == 1) {
+            return true; // bloqué par un mur
+        }
+
+        // Sinon, déplacement possible
+        return false;
+    }
+
 	}
+
