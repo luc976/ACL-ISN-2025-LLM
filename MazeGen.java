@@ -253,36 +253,7 @@ public class MazeGenAcces {
         });
 	
 // Déplace le héros selon la touche pressée
-    	private void deplacerHeros(int keyCode) {
-        	int nouvelleX = heroX;
-        	int nouvelleY = heroY;
-
-        	switch (keyCode) {
-            	case KeyEvent.VK_LEFT:
-                	nouvelleX--;
-                	break;
-            	case KeyEvent.VK_RIGHT:
-                	nouvelleX++;
-                	break;
-            	case KeyEvent.VK_UP:
-                	nouvelleY--;
-               		break;
-            	case KeyEvent.VK_DOWN:
-                	nouvelleY++;
-                	break;
-        	}
-
-        	if (estValide(nouvelleX, nouvelleY)) {
-            	maze[heroY][heroX] = 0;
-            	heroX = nouvelleX;
-            	heroY = nouvelleY;
-            	maze[heroY][heroX] = 2;
-
-            	deplacerEnnemi(); // l'ennemi bouge à son tour
-            	repaint();
-        	}
-    	}
-
+    	
     // Déplace l’ennemi d’une case vers le héros
     	private void deplacerEnnemi() {
         	maze[ennemiY][ennemiX] = 0;
@@ -326,6 +297,7 @@ public class MazeGenAcces {
     	}
 }
 	    
+
 
 
 
