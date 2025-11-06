@@ -284,11 +284,12 @@ public class MazeGenAcces {
     	}
 
     // Vérifie si la case est libre (pas un mur)
-    	private boolean estValide(int x, int y) {
-        	return x >= 0 && x < COLONNES && y >= 0 && y < LIGNES && labyrinthe[y][x] != 1;
+    	private boolean blocage(int x, int y) {
+        	return x >= 0 && x < COLONNES && y >= 0 && y < LIGNES && maze[y][x] != 1;
     	}
 }
 	    
+
 
 
 
