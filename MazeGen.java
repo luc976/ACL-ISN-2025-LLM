@@ -243,14 +243,6 @@ public class MazeGenAcces {
 		maze[heroY][heroX] = 2; // héros
         maze[ennemiY][ennemiX] = 3; // ennemi
 
-        // Écouteur de touches clavier
-        this.setFocusable(true);
-        this.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                deplacerHeros(e.getKeyCode());
-            }
-        });
 	
 // Déplace le héros selon la touche pressée
     	
@@ -297,6 +289,7 @@ public class MazeGenAcces {
     	}
 }
 	    
+
 
 
 
