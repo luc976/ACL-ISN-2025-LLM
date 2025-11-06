@@ -1,55 +1,3 @@
-public static int[] deplacementEnnemi(int ex, int ey, int hx, int hy, int[][] carte) {
-    int newEx = ex;
-    int newEy = ey;
-
-    String direction = ""; // ✅ initialisation
-
-    if (Math.abs(hx - ex) > Math.abs(hy - ey)) {
-        if (hx < ex) direction = "gauche";
-        else if (hx > ex) direction = "droite";
-    } else {
-        if (hy < ey) direction = "haut";
-        else if (hy > ey) direction = "bas";
-    }
-
-    if (!direction.isEmpty() && !blocageString(ex, ey, direction, carte)) { // ✅ vérifie que non vide
-        carte[ey][ex] = PATH;
-        switch (direction) {
-            case "haut":    newEy--; break;
-            case "bas":     newEy++; break;
-            case "gauche":  newEx--; break;
-            case "droite":  newEx++; break;
-        }
-        carte[newEy][newEx] = ENEMY;
-    }
-
-    return new int[]{newEx, newEy};
-}
-🔹 Partie 2 : connectRegions
-java
-Copier le code
-List<int[]> disconnectedCells = new ArrayList<int[]>(); // ✅ typage explicite
-💡 Résumé
-Erreur	Ligne concernée	Correction
-Variable direction non initialisée	deplacementEnnemi()	String direction = "";
-Type de liste incomplet	connectRegions()	new ArrayList<int[]>();
-
-🟢 Après ces deux corrections, ton code compile et fonctionne.
-Tu pourras le lancer avec javac MazeGenAcces.java puis java MazeGen.MazeGenAcces, et le jeu s’ouvrira dans une fenêtre Swing avec contrôles clavier.
-
-Souhaites-tu que je t’ajoute une amélioration (comme le déplacement automatique de l’ennemi toutes les X secondes avec un Timer Swing) ?
-
-
-Vous avez dit :
-corrige les
-
-
-ChatGPT a dit :
-Parfait 👍 Voici ton code corrigé et entièrement fonctionnel, avec les 2 erreurs corrigées et des légères améliorations de robustesse (sans rien changer au comportement du jeu).
-
-✅ Code complet corrigé :
-java
-Copier le code
 package MazeGen;
 
 import java.awt.*;
@@ -504,6 +452,5 @@ public class MazeGenAcces extends JPanel {
         return false;
     }
 }
-
 
 
