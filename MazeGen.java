@@ -1,8 +1,15 @@
 package MazeGen;
-
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.*;
 
 public class MazeGenAcces {
+		private int heroX = 1; // position du héros
+    	private int heroY = 1;
+    	private int ennemiX = 8; // position de l’ennemi
+    	private int ennemiY = 8;
 
 
 	    private static final int WALL = 1;
@@ -233,103 +240,88 @@ public class MazeGenAcces {
 	            System.out.println();
 	        }
 	    }
-}
-	    /**
-       * Vérifie si le déplacement du héros est bloqué.
-       *
-       * @param x         position actuelle du héros (colonne)
-       * @param y         position actuelle du héros (ligne)
-       * @param direction "haut", "bas", "gauche" ou "droite"
-       * @param carte     matrice du terrain (0 = vide, 1 = mur)
-       * @return true si le déplacement est bloqué, false sinon
-       */
-	    public static boolean blocage(int x, int y, String direction, int[][] carte) {
+		labyrinthe[heroY][heroX] = 2; // héros
+        labyrinthe[ennemiY][ennemiX] = 3; // ennemi
 
-        int xSuiv = x;
-        int ySuiv = y;
-
-        // Calcul de la case suivante selon la direction
-        switch (direction.toLowerCase()) {
-            case "haut":
-                ySuiv = y - 1;
-                break;
-            case "bas":
-                ySuiv = y + 1;
-                break;
-            case "gauche":
-                xSuiv = x - 1;
-                break;
-            case "droite":
-                xSuiv = x + 1;
-                break;
-            default:
-                // direction inconnue = bloqué
-                return true;
-        }
-
-        // Vérifie les bords de la carte
-        if (ySuiv < 0 || ySuiv >= carte.length || xSuiv < 0 || xSuiv >= carte[0].length) {
-            return true; // en dehors de la carte
-        }
-
-        // Vérifie la présence d’un mur (1 = obstacle)
-        if (carte[ySuiv][xSuiv] == 1) {
-            return true; // bloqué par un mur
-        }
-
-        // Sinon, déplacement possible
-        return false;
-    }
-	 // --- Fonction de création de l'ennemi ---
-    public static int[] creerEnnemi(int x, int y, int[][] carte) {
-        carte[y][x] = 3; // 3 = ennemi
-        return new int[]{x, y};
-    }
-
-    // --- Déplacement de l’ennemi vers le héros ---
-    public static int[] deplacementEnnemi(int ex, int ey, int hx, int hy, int[][] carte) {
-        int newEx = ex;
-        int newEy = ey;
-
-        // Déterminer la direction la plus proche du héros
-        String direction = null;
-
-        if (Math.abs(hx - ex) > Math.abs(hy - ey)) {
-            // se rapprocher horizontalement
-            if (hx < ex) direction = "gauche";
-            else if (hx > ex) direction = "droite";
-        } else {
-            // se rapprocher verticalement
-            if (hy < ey) direction = "haut";
-            else if (hy > ey) direction = "bas";
-        }
-
-        // Vérifie si le déplacement est possible
-        if (direction != null && !blocage(ex, ey, direction, carte)) {
-            carte[ey][ex] = 0; // effacer ancienne position
-            switch (direction) {
-                case "haut":    newEy--; break;
-                case "bas":     newEy++; break;
-                case "gauche":  newEx--; break;
-                case "droite":  newEx++; break;
+        // Écouteur de touches clavier
+        this.setFocusable(true);
+        this.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                deplacerHeros(e.getKeyCode());
             }
-            carte[newEy][newEx] = 3; // nouvelle position de l’ennemi
+        });
+	}
+// Déplace le héros selon la touche pressée
+    private void deplacerHeros(int keyCode) {
+        int nouvelleX = heroX;
+        int nouvelleY = heroY;
+
+        switch (keyCode) {
+            case KeyEvent.VK_LEFT:
+                nouvelleX--;
+                break;
+            case KeyEvent.VK_RIGHT:
+                nouvelleX++;
+                break;
+            case KeyEvent.VK_UP:
+                nouvelleY--;
+                break;
+            case KeyEvent.VK_DOWN:
+                nouvelleY++;
+                break;
         }
 
-        return new int[]{newEx, newEy};
-    }
-	// --- Vérifie si le héros meurt ---
-    public static boolean verifierMort(int herosX, int herosY, int ennemiX, int ennemiY) {
-        if (herosX == ennemiX && herosY == ennemiY) {
-            System.out.println("\n==============================");
-            System.out.println("💀💀💀  VOUS ÊTES MORT  💀💀💀");
-            System.out.println("==============================\n");
-            return true;
+        if (estValide(nouvelleX, nouvelleY)) {
+            labyrinthe[heroY][heroX] = 0;
+            heroX = nouvelleX;
+            heroY = nouvelleY;
+            labyrinthe[heroY][heroX] = 2;
+
+            deplacerEnnemi(); // l'ennemi bouge à son tour
+            repaint();
         }
-        return false;
     }
 
+    // Déplace l’ennemi d’une case vers le héros
+    private void deplacerEnnemi() {
+        labyrinthe[ennemiY][ennemiX] = 0;
 
+        int dx = Integer.compare(heroX, ennemiX); // -1, 0 ou 1
+        int dy = Integer.compare(heroY, ennemiY);
 
+        int nouvelleX = ennemiX;
+        int nouvelleY = ennemiY;
 
+        // On essaie de bouger vers le héros (priorité sur l'axe X)
+        if (Math.abs(heroX - ennemiX) > Math.abs(heroY - ennemiY)) {
+            if (estValide(ennemiX + dx, ennemiY)) {
+                nouvelleX += dx;
+            } else if (estValide(ennemiX, ennemiY + dy)) {
+                nouvelleY += dy;
+            }
+        } else {
+            if (estValide(ennemiX, ennemiY + dy)) {
+                nouvelleY += dy;
+            } else if (estValide(ennemiX + dx, ennemiY)) {
+                nouvelleX += dx;
+            }
+        }
 
+        ennemiX = nouvelleX;
+        ennemiY = nouvelleY;
+
+        // Si l’ennemi touche le héros
+        if (ennemiX == heroX && ennemiY == heroY) {
+            JOptionPane.showMessageDialog(this, "💀 L’ennemi vous a attrapé !");
+            System.exit(0);
+        }
+
+        labyrinthe[ennemiY][ennemiX] = 3;
+    }
+
+    // Vérifie si la case est libre (pas un mur)
+    private boolean estValide(int x, int y) {
+        return x >= 0 && x < COLONNES && y >= 0 && y < LIGNES && labyrinthe[y][x] != 1;
+    }
+	    
