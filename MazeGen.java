@@ -240,8 +240,8 @@ public class MazeGenAcces {
 	            System.out.println();
 	        }
 	    }
-		labyrinthe[heroY][heroX] = 2; // héros
-        labyrinthe[ennemiY][ennemiX] = 3; // ennemi
+		maze[heroY][heroX] = 2; // héros
+        maze[ennemiY][ennemiX] = 3; // ennemi
 
         // Écouteur de touches clavier
         this.setFocusable(true);
@@ -273,10 +273,10 @@ public class MazeGenAcces {
         }
 
         if (estValide(nouvelleX, nouvelleY)) {
-            labyrinthe[heroY][heroX] = 0;
+            maze[heroY][heroX] = 0;
             heroX = nouvelleX;
             heroY = nouvelleY;
-            labyrinthe[heroY][heroX] = 2;
+            maze[heroY][heroX] = 2;
 
             deplacerEnnemi(); // l'ennemi bouge à son tour
             repaint();
@@ -285,7 +285,7 @@ public class MazeGenAcces {
 
     // Déplace l’ennemi d’une case vers le héros
     private void deplacerEnnemi() {
-        labyrinthe[ennemiY][ennemiX] = 0;
+        maze[ennemiY][ennemiX] = 0;
 
         int dx = Integer.compare(heroX, ennemiX); // -1, 0 ou 1
         int dy = Integer.compare(heroY, ennemiY);
@@ -317,7 +317,7 @@ public class MazeGenAcces {
             System.exit(0);
         }
 
-        labyrinthe[ennemiY][ennemiX] = 3;
+        maze[ennemiY][ennemiX] = 3;
     }
 
     // Vérifie si la case est libre (pas un mur)
@@ -325,3 +325,4 @@ public class MazeGenAcces {
         return x >= 0 && x < COLONNES && y >= 0 && y < LIGNES && labyrinthe[y][x] != 1;
     }
 	    
+
