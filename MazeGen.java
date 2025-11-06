@@ -253,76 +253,77 @@ public class MazeGenAcces {
         });
 	}
 // Déplace le héros selon la touche pressée
-    private void deplacerHeros(int keyCode) {
-        int nouvelleX = heroX;
-        int nouvelleY = heroY;
+    	private void deplacerHeros(int keyCode) {
+        	int nouvelleX = heroX;
+        	int nouvelleY = heroY;
 
-        switch (keyCode) {
-            case KeyEvent.VK_LEFT:
-                nouvelleX--;
-                break;
-            case KeyEvent.VK_RIGHT:
-                nouvelleX++;
-                break;
-            case KeyEvent.VK_UP:
-                nouvelleY--;
-                break;
-            case KeyEvent.VK_DOWN:
-                nouvelleY++;
-                break;
-        }
+        	switch (keyCode) {
+            	case KeyEvent.VK_LEFT:
+                	nouvelleX--;
+                	break;
+            	case KeyEvent.VK_RIGHT:
+                	nouvelleX++;
+                	break;
+            	case KeyEvent.VK_UP:
+                	nouvelleY--;
+               		break;
+            	case KeyEvent.VK_DOWN:
+                	nouvelleY++;
+                	break;
+        	}
 
-        if (estValide(nouvelleX, nouvelleY)) {
-            maze[heroY][heroX] = 0;
-            heroX = nouvelleX;
-            heroY = nouvelleY;
-            maze[heroY][heroX] = 2;
+        	if (estValide(nouvelleX, nouvelleY)) {
+            	maze[heroY][heroX] = 0;
+            	heroX = nouvelleX;
+            	heroY = nouvelleY;
+            	maze[heroY][heroX] = 2;
 
-            deplacerEnnemi(); // l'ennemi bouge à son tour
-            repaint();
-        }
-    }
+            	deplacerEnnemi(); // l'ennemi bouge à son tour
+            	repaint();
+        	}
+    	}
 
     // Déplace l’ennemi d’une case vers le héros
-    private void deplacerEnnemi() {
-        maze[ennemiY][ennemiX] = 0;
+    	private void deplacerEnnemi() {
+        	maze[ennemiY][ennemiX] = 0;
 
-        int dx = Integer.compare(heroX, ennemiX); // -1, 0 ou 1
-        int dy = Integer.compare(heroY, ennemiY);
+        	int dx = Integer.compare(heroX, ennemiX); // -1, 0 ou 1
+        	int dy = Integer.compare(heroY, ennemiY);
 
-        int nouvelleX = ennemiX;
-        int nouvelleY = ennemiY;
+        	int nouvelleX = ennemiX;
+        	int nouvelleY = ennemiY;
 
         // On essaie de bouger vers le héros (priorité sur l'axe X)
-        if (Math.abs(heroX - ennemiX) > Math.abs(heroY - ennemiY)) {
-            if (estValide(ennemiX + dx, ennemiY)) {
-                nouvelleX += dx;
-            } else if (estValide(ennemiX, ennemiY + dy)) {
-                nouvelleY += dy;
-            }
-        } else {
-            if (estValide(ennemiX, ennemiY + dy)) {
-                nouvelleY += dy;
-            } else if (estValide(ennemiX + dx, ennemiY)) {
-                nouvelleX += dx;
-            }
-        }
+        	if (Math.abs(heroX - ennemiX) > Math.abs(heroY - ennemiY)) {
+            	if (estValide(ennemiX + dx, ennemiY)) {
+                	nouvelleX += dx;
+            	} else if (estValide(ennemiX, ennemiY + dy)) {
+                	nouvelleY += dy;
+            	}
+        	} else {
+            	if (estValide(ennemiX, ennemiY + dy)) {
+                	nouvelleY += dy;
+            	} else if (estValide(ennemiX + dx, ennemiY)) {
+                	nouvelleX += dx;
+            	}
+        	}
 
-        ennemiX = nouvelleX;
-        ennemiY = nouvelleY;
+        	ennemiX = nouvelleX;
+        	ennemiY = nouvelleY;
 
         // Si l’ennemi touche le héros
-        if (ennemiX == heroX && ennemiY == heroY) {
-            JOptionPane.showMessageDialog(this, "💀 L’ennemi vous a attrapé !");
-            System.exit(0);
-        }
+        	if (ennemiX == heroX && ennemiY == heroY) {
+            	JOptionPane.showMessageDialog(this, "💀 L’ennemi vous a attrapé !");
+            	System.exit(0);
+        	}
 
-        maze[ennemiY][ennemiX] = 3;
-    }
+        	maze[ennemiY][ennemiX] = 3;
+    	}
 
     // Vérifie si la case est libre (pas un mur)
-    private boolean estValide(int x, int y) {
-        return x >= 0 && x < COLONNES && y >= 0 && y < LIGNES && labyrinthe[y][x] != 1;
-    }
+    	private boolean estValide(int x, int y) {
+        	return x >= 0 && x < COLONNES && y >= 0 && y < LIGNES && labyrinthe[y][x] != 1;
+    	}
 	    
+
 
