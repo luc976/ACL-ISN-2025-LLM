@@ -251,7 +251,7 @@ public class MazeGenAcces {
                 deplacerHeros(e.getKeyCode());
             }
         });
-	}
+	
 // Déplace le héros selon la touche pressée
     	private void deplacerHeros(int keyCode) {
         	int nouvelleX = heroX;
@@ -324,6 +324,8 @@ public class MazeGenAcces {
     	private boolean estValide(int x, int y) {
         	return x >= 0 && x < COLONNES && y >= 0 && y < LIGNES && labyrinthe[y][x] != 1;
     	}
+}
 	    
+
 
 
