@@ -1,0 +1,15 @@
+Review
+
+etat d'avancement: retard de 1 sprint sur ce qui etait prévu dans le read me
+cause: manque de communication, d'investissement personnel de la part de tout le monde. 
+      Le retard est du a un manque de reunion qui ont empeché de tout mettre en commun et de resoudre les erreurs des programmes.
+
+fonctionnalité creer: labyrinthe aleatoire / deplacement du héros avec les fleches du clavier / ajout d'un ennemis qui se deplace constament vers le heros.
+ajustement a prévoir: regler le probleme des mur sur le heros et les ennemis du au placement aleatoire des mur / restructuration du programme 
+                      / creer une interface afin de lancer le jeu proprement
+solution: generer une liste de map avec des placements deja concut et tirer au sort parmis ces map 
+fonctionnalité a venir : systeme de munitions (direction diriger par d'autre touches) / stock de munitions et possibilité d'en recuperer par terre / ajout d'un chronometre 
+                        / apparition de plus d'ennemis qui apparaisent avec le temps / ameliorer les graphismes
+
+fonctionnalité bonus : faire des systemes de porte afin de voyager et changer de map (réduire la tailles des map) / ajouter des equipements suplementaires (vie / bouclier)
+                       varier les ia des monstres et rajouter des spécificité a certain 
