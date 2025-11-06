@@ -1,295 +1,556 @@
 package MazeGen;
-import javax.swing.*;
+
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
+import javax.swing.*;
 import java.util.*;
 
-public class MazeGenAcces {
-		private int heroX = 1; // position du héros
-    	private int heroY = 1;
-    	private int ennemiX = 8; // position de l’ennemi
-    	private int ennemiY = 8;
+public class MazeGenAcces extends JPanel {
 
+    // === CONSTANTES DU JEU ===
+    private static final int WALL = 1;
+    private static final int PATH = 0;
+    private static final int HERO = 2;
+    private static final int ENEMY = 3;
 
-	    private static final int WALL = 1;
-	    private static final int PATH = 0;
+    // === VARIABLES GLOBALES ===
+    private static int rows;
+    private static int cols;
+    private static double initialWallChance = 0.45;
+    private static int[][] maze;
+    private static Random random = new Random();
+    
+    // === VARIABLES DE JEU ===
+    private static int herosX = 1;
+    private static int herosY = 1;
+    private static int ennemiX = 5;
+    private static int ennemiY = 5;
+    private static boolean jeuEnCours = true;
+    
+    // === VARIABLES D'AFFICHAGE ===
+    private static final int CELL_SIZE = 15; // Taille d'une case en pixels
+    private static JFrame frame;
+    private static MazeGenAcces panel;
 
-	    private static int rows;
-	    private static int cols;
-	    private static double initialWallChance = 0.45;
-	    private static int[][] maze;
-	    private static Random random = new Random();
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
 
-	    public static void main(String[] args) {
-	        Scanner scanner = new Scanner(System.in);
+        // === CHOIX DE LA TAILLE DU LABYRINTHE ===
+        System.out.println("Choose cave map size:");
+        System.out.println("1. Small (32x32)");
+        System.out.println("2. Medium (64x64)");
+        System.out.println("3. Large (128x128)");
+        System.out.print("Enter choice: ");
+        int choice = scanner.nextInt();
 
-	        System.out.println("Choose cave map size:");
-	        System.out.println("1. Small (32x32)");
-	        System.out.println("2. Medium (64x64)");
-	        System.out.println("3. Large (128x128)");
-	        System.out.print("Enter choice: ");
-	        int choice = scanner.nextInt();
+        switch (choice) {
+            case 1:
+                rows = 32;
+                cols = 32;
+                break;
+            case 2:
+                rows = 64;
+                cols = 64;
+                break;
+            case 3:
+                rows = 128;
+                cols = 128;
+                break;
+            default:
+                rows = 21;
+                cols = 21;
+                break;
+        }
 
-	        switch (choice) {
-	            case 1:
-	                rows = 32;
-	                cols = 32;
-	                break;
-	            case 2:
-	                rows = 64;
-	                cols = 64;
-	                break;
-	            case 3:
-	                rows = 128;
-	                cols = 128;
-	                break;
-	            default:
-	                rows = 21;
-	                cols = 21;
-	                break;
-	        }
+        maze = new int[rows][cols];
 
-	        maze = new int[rows][cols];
+        // === GÉNÉRATION DU LABYRINTHE ===
+        fillRandomMaze();
 
-	        fillRandomMaze();
+        int iterations = 5;
+        for (int k = 0; k < iterations; k++) {
+            maze = doSimulationStep(maze);
+        }
 
-	        int iterations = 5;
-	        for (int k = 0; k < iterations; k++) {
-	            maze = doSimulationStep(maze);
-	        }
+        maze[1][1] = PATH;
+        maze[rows - 2][cols - 2] = PATH;
 
-	        maze[1][1] = PATH; // entrance
-	        maze[rows - 2][cols - 2] = PATH; // exit
+        connectRegions();
 
-	        connectRegions();
+        // === INITIALISATION DU HÉROS ET DE L'ENNEMI ===
+        herosX = 1;
+        herosY = 1;
+        maze[herosY][herosX] = HERO;
 
-	        printMaze();
-	    }
+        int[] ennemiCoord = creerEnnemi(5, 5, maze);
+        ennemiX = ennemiCoord[0];
+        ennemiY = ennemiCoord[1];
 
-	    private static void fillRandomMaze() {
-	        for (int i = 0; i < rows; i++) {
-	            for (int j = 0; j < cols; j++) {
-	                if (i == 0 || j == 0 || i == rows - 1 || j == cols - 1) {
-	                    maze[i][j] = WALL;
-	                } else {
-	                    maze[i][j] = random.nextDouble() < initialWallChance ? WALL : PATH;
-	                }
-	            }
-	        }
-	    }
+        scanner.close();
 
-	    private static int[][] doSimulationStep(int[][] oldMap) {
-	        int[][] newMap = new int[rows][cols];
+        // === CRÉATION DE LA FENÊTRE GRAPHIQUE ===
+        SwingUtilities.invokeLater(() -> createAndShowGUI());
+    }
 
-	        for (int i = 0; i < rows; i++) {
-	            for (int j = 0; j < cols; j++) {
-	                int neighbors = countWallNeighbors(oldMap, i, j);
+    /**
+     * Crée et affiche la fenêtre graphique du jeu
+     */
+    private static void createAndShowGUI() {
+        frame = new JFrame("Maze Game - Utilisez les flèches pour vous déplacer");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
+        panel = new MazeGenAcces();
+        panel.setPreferredSize(new Dimension(cols * CELL_SIZE, rows * CELL_SIZE + 50));
+        panel.setFocusable(true);
+        
+        // === AJOUT DU LISTENER POUR LES TOUCHES ===
+        panel.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (!jeuEnCours) return; // Ne fait rien si le jeu est terminé
+                
+                // Récupère le code de la touche pressée
+                int keyCode = e.getKeyCode();
+                
+                // === APPEL DE LA FONCTION MOUVEMENT SELON LA FLÈCHE ===
+                switch (keyCode) {
+                    case KeyEvent.VK_UP:    // Flèche haut
+                        int[] newPosUp = mouvement(herosX, herosY, KeyEvent.VK_UP, maze);
+                        herosX = newPosUp[0];
+                        herosY = newPosUp[1];
+                        break;
+                        
+                    case KeyEvent.VK_DOWN:  // Flèche bas
+                        int[] newPosDown = mouvement(herosX, herosY, KeyEvent.VK_DOWN, maze);
+                        herosX = newPosDown[0];
+                        herosY = newPosDown[1];
+                        break;
+                        
+                    case KeyEvent.VK_LEFT:  // Flèche gauche
+                        int[] newPosLeft = mouvement(herosX, herosY, KeyEvent.VK_LEFT, maze);
+                        herosX = newPosLeft[0];
+                        herosY = newPosLeft[1];
+                        break;
+                        
+                    case KeyEvent.VK_RIGHT: // Flèche droite
+                        int[] newPosRight = mouvement(herosX, herosY, KeyEvent.VK_RIGHT, maze);
+                        herosX = newPosRight[0];
+                        herosY = newPosRight[1];
+                        break;
+                        
+                    case KeyEvent.VK_ESCAPE: // Touche Echap pour quitter
+                        System.exit(0);
+                        break;
+                        
+                    default:
+                        return; // Ignore les autres touches
+                }
+                
+                // === DÉPLACEMENT DE L'ENNEMI ===
+                int[] nouvellesCoordEnnemi = deplacementEnnemi(ennemiX, ennemiY, herosX, herosY, maze);
+                ennemiX = nouvellesCoordEnnemi[0];
+                ennemiY = nouvellesCoordEnnemi[1];
+                
+                // === VÉRIFICATIONS ===
+                if (verifierMort(herosX, herosY, ennemiX, ennemiY)) {
+                    jeuEnCours = false;
+                    JOptionPane.showMessageDialog(frame, "💀 GAME OVER! 💀", "Défaite", JOptionPane.ERROR_MESSAGE);
+                }
+                
+                if (herosX == cols - 2 && herosY == rows - 2) {
+                    jeuEnCours = false;
+                    JOptionPane.showMessageDialog(frame, "🎉 VICTOIRE! 🎉\nVous avez atteint la sortie!", "Victoire", JOptionPane.INFORMATION_MESSAGE);
+                }
+                
+                // Redessine le labyrinthe
+                panel.repaint();
+            }
+        });
+        
+        frame.add(panel);
+        frame.pack();
+        frame.setLocationRelativeTo(null); // Centre la fenêtre
+        frame.setVisible(true);
+        
+        System.out.println("\n=== JEU LANCÉ ===");
+        System.out.println("Utilisez les FLÈCHES du clavier pour vous déplacer");
+        System.out.println("Objectif: Atteignez la sortie (coin bas-droite) sans vous faire tuer!");
+        System.out.println("Appuyez sur ECHAP pour quitter");
+    }
 
-	                if (oldMap[i][j] == WALL) {
-	                    newMap[i][j] = neighbors >= 4 ? WALL : PATH;
-	                } else {
-	                    newMap[i][j] = neighbors >= 5 ? WALL : PATH;
-	                }
-	            }
-	        }
-	        return newMap;
-	    }
+    /**
+     * Dessine le labyrinthe dans la fenêtre graphique
+     */
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        
+        // Parcourt chaque case du labyrinthe
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                int x = j * CELL_SIZE;
+                int y = i * CELL_SIZE;
+                
+                // Dessine selon le type de case
+                switch (maze[i][j]) {
+                    case WALL:
+                        g.setColor(Color.BLACK); // Murs en noir
+                        g.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+                        break;
+                    case PATH:
+                        g.setColor(Color.WHITE); // Chemins en blanc
+                        g.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+                        break;
+                    case HERO:
+                        g.setColor(Color.WHITE);
+                        g.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+                        g.setColor(Color.BLUE); // Héros en bleu
+                        g.fillOval(x + 2, y + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+                        break;
+                    case ENEMY:
+                        g.setColor(Color.WHITE);
+                        g.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+                        g.setColor(Color.RED); // Ennemi en rouge
+                        g.fillOval(x + 2, y + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+                        break;
+                }
+                
+                // Grille pour mieux voir
+                g.setColor(Color.LIGHT_GRAY);
+                g.drawRect(x, y, CELL_SIZE, CELL_SIZE);
+            }
+        }
+        
+        // Affiche les informations en bas
+        g.setColor(Color.BLACK);
+        g.drawString("Position Héros: (" + herosX + ", " + herosY + ")  |  Position Ennemi: (" + ennemiX + ", " + ennemiY + ")", 10, rows * CELL_SIZE + 20);
+        g.drawString("Utilisez les FLÈCHES pour bouger | ECHAP pour quitter", 10, rows * CELL_SIZE + 40);
+    }
 
-	    private static int countWallNeighbors(int[][] map, int r, int c) {
-	        int count = 0;
-	        for (int i = r - 1; i <= r + 1; i++) {
-	            for (int j = c - 1; j <= c + 1; j++) {
-	                if (i == r && j == c) continue;
-	                if (i < 0 || j < 0 || i >= rows || j >= cols) count++;
-	                else if (map[i][j] == WALL) count++;
-	            }
-	        }
-	        return count;
-	    }
+    // ========================================
+    // FONCTIONS DE GÉNÉRATION DU LABYRINTHE
+    // ========================================
 
-	    // Connect all isolated path regions to the main region reachable from the entrance
-	    private static void connectRegions() {
-	        boolean[][] visited = new boolean[rows][cols];
-	        bfs(1, 1, visited);
+    private static void fillRandomMaze() {
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                if (i == 0 || j == 0 || i == rows - 1 || j == cols - 1) {
+                    maze[i][j] = WALL;
+                } else {
+                    maze[i][j] = random.nextDouble() < initialWallChance ? WALL : PATH;
+                }
+            }
+        }
+    }
 
-	        // List of unvisited path cells (disconnected areas)
-	        List<int[]> disconnectedCells = new ArrayList<>();
-	        for (int i = 1; i < rows - 1; i++) {
-	            for (int j = 1; j < cols - 1; j++) {
-	                if (maze[i][j] == PATH && !visited[i][j]) {
-	                    disconnectedCells.add(new int[]{i, j});
-	                }
-	            }
-	        }
+    private static int[][] doSimulationStep(int[][] oldMap) {
+        int[][] newMap = new int[rows][cols];
 
-	        // While disconnected cells remain, connect them
-	        while (!disconnectedCells.isEmpty()) {
-	            // Pick one disconnected cell's region
-	            int[] cell = disconnectedCells.get(0);
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                int neighbors = countWallNeighbors(oldMap, i, j);
 
-	            // Find all cells in this disconnected region using BFS
-	            List<int[]> region = new ArrayList<>();
-	            boolean[][] regionVisited = new boolean[rows][cols];
-	            Queue<int[]> queue = new LinkedList<>();
-	            queue.add(cell);
-	            regionVisited[cell[0]][cell[1]] = true;
+                if (oldMap[i][j] == WALL) {
+                    newMap[i][j] = neighbors >= 4 ? WALL : PATH;
+                } else {
+                    newMap[i][j] = neighbors >= 5 ? WALL : PATH;
+                }
+            }
+        }
+        return newMap;
+    }
 
-	            while (!queue.isEmpty()) {
-	                int[] current = queue.poll();
-	                region.add(current);
+    private static int countWallNeighbors(int[][] map, int r, int c) {
+        int count = 0;
+        for (int i = r - 1; i <= r + 1; i++) {
+            for (int j = c - 1; j <= c + 1; j++) {
+                if (i == r && j == c) continue;
+                if (i < 0 || j < 0 || i >= rows || j >= cols) count++;
+                else if (map[i][j] == WALL) count++;
+            }
+        }
+        return count;
+    }
 
-	                int r = current[0];
-	                int c = current[1];
+    private static void connectRegions() {
+        boolean[][] visited = new boolean[rows][cols];
+        bfs(1, 1, visited);
 
-	                int[][] neighbors = {{r - 1, c}, {r + 1, c}, {r, c - 1}, {r, c + 1}};
-	                for (int[] n : neighbors) {
-	                    int nr = n[0], nc = n[1];
-	                    if (nr > 0 && nr < rows - 1 && nc > 0 && nc < cols - 1 &&
-	                        maze[nr][nc] == PATH && !regionVisited[nr][nc]) {
-	                        regionVisited[nr][nc] = true;
-	                        queue.add(new int[]{nr, nc});
-	                    }
-	                }
-	            }
+        List<int[]> disconnectedCells = new ArrayList<>();
+        for (int i = 1; i < rows - 1; i++) {
+            for (int j = 1; j < cols - 1; j++) {
+                if (maze[i][j] == PATH && !visited[i][j]) {
+                    disconnectedCells.add(new int[]{i, j});
+                }
+            }
+        }
 
-	            // Find the closest pair of cells between this region and the main reachable area
-	            int minDist = Integer.MAX_VALUE;
-	            int[] bestRegionCell = null;
-	            int[] bestVisitedCell = null;
+        while (!disconnectedCells.isEmpty()) {
+            int[] cell = disconnectedCells.get(0);
 
-	            for (int[] rc : region) {
-	                for (int i = 1; i < rows - 1; i++) {
-	                    for (int j = 1; j < cols - 1; j++) {
-	                        if (visited[i][j]) {
-	                            int dist = Math.abs(rc[0] - i) + Math.abs(rc[1] - j);
-	                            if (dist < minDist) {
-	                                minDist = dist;
-	                                bestRegionCell = rc;
-	                                bestVisitedCell = new int[]{i, j};
-	                            }
-	                        }
-	                    }
-	                }
-	            }
+            List<int[]> region = new ArrayList<>();
+            boolean[][] regionVisited = new boolean[rows][cols];
+            Queue<int[]> queue = new LinkedList<>();
+            queue.add(cell);
+            regionVisited[cell[0]][cell[1]] = true;
 
-	            // Carve a path between bestRegionCell and bestVisitedCell
-	            carvePath(bestRegionCell, bestVisitedCell);
+            while (!queue.isEmpty()) {
+                int[] current = queue.poll();
+                region.add(current);
 
-	            // Update visited with new connectivity
-	            bfs(1, 1, visited);
+                int r = current[0];
+                int c = current[1];
 
-	            // Update disconnectedCells list
-	            disconnectedCells.clear();
-	            for (int i = 1; i < rows - 1; i++) {
-	                for (int j = 1; j < cols - 1; j++) {
-	                    if (maze[i][j] == PATH && !visited[i][j]) {
-	                        disconnectedCells.add(new int[]{i, j});
-	                    }
-	                }
-	            }
-	        }
-	    }
+                int[][] neighbors = {{r - 1, c}, {r + 1, c}, {r, c - 1}, {r, c + 1}};
+                for (int[] n : neighbors) {
+                    int nr = n[0], nc = n[1];
+                    if (nr > 0 && nr < rows - 1 && nc > 0 && nc < cols - 1 &&
+                        maze[nr][nc] == PATH && !regionVisited[nr][nc]) {
+                        regionVisited[nr][nc] = true;
+                        queue.add(new int[]{nr, nc});
+                    }
+                }
+            }
 
-	    // BFS to mark reachable path cells from start
-	    private static void bfs(int startR, int startC, boolean[][] visited) {
-	        for (int i = 0; i < rows; i++) Arrays.fill(visited[i], false);
+            int minDist = Integer.MAX_VALUE;
+            int[] bestRegionCell = null;
+            int[] bestVisitedCell = null;
 
-	        Queue<int[]> queue = new LinkedList<>();
-	        queue.add(new int[]{startR, startC});
-	        visited[startR][startC] = true;
+            for (int[] rc : region) {
+                for (int i = 1; i < rows - 1; i++) {
+                    for (int j = 1; j < cols - 1; j++) {
+                        if (visited[i][j]) {
+                            int dist = Math.abs(rc[0] - i) + Math.abs(rc[1] - j);
+                            if (dist < minDist) {
+                                minDist = dist;
+                                bestRegionCell = rc;
+                                bestVisitedCell = new int[]{i, j};
+                            }
+                        }
+                    }
+                }
+            }
 
-	        while (!queue.isEmpty()) {
-	            int[] curr = queue.poll();
-	            int r = curr[0], c = curr[1];
-	            int[][] neighbors = {{r - 1, c}, {r + 1, c}, {r, c - 1}, {r, c + 1}};
+            carvePath(bestRegionCell, bestVisitedCell);
+            bfs(1, 1, visited);
 
-	            for (int[] n : neighbors) {
-	                int nr = n[0], nc = n[1];
-	                if (nr > 0 && nr < rows - 1 && nc > 0 && nc < cols - 1 &&
-	                    maze[nr][nc] == PATH && !visited[nr][nc]) {
-	                    visited[nr][nc] = true;
-	                    queue.add(new int[]{nr, nc});
-	                }
-	            }
-	        }
-	    }
+            disconnectedCells.clear();
+            for (int i = 1; i < rows - 1; i++) {
+                for (int j = 1; j < cols - 1; j++) {
+                    if (maze[i][j] == PATH && !visited[i][j]) {
+                        disconnectedCells.add(new int[]{i, j});
+                    }
+                }
+            }
+        }
+    }
 
-	    // Carve a simple direct path between two points
-	    private static void carvePath(int[] from, int[] to) {
-	        int r = from[0];
-	        int c = from[1];
+    private static void bfs(int startR, int startC, boolean[][] visited) {
+        for (int i = 0; i < rows; i++) Arrays.fill(visited[i], false);
 
-	        // Carve horizontally first
-	        while (c != to[1]) {
-	            maze[r][c] = PATH;
-	            c += (to[1] > c) ? 1 : -1;
-	        }
-	        // Carve vertically
-	        while (r != to[0]) {
-	            maze[r][c] = PATH;
-	            r += (to[0] > r) ? 1 : -1;
-	        }
-	    }
+        Queue<int[]> queue = new LinkedList<>();
+        queue.add(new int[]{startR, startC});
+        visited[startR][startC] = true;
 
-	    private static void printMaze() {
-	        for (int[] row : maze) {
-	            for (int cell : row) {
-	                System.out.print(cell == WALL ? "#" : " ");
-	            }
-	            System.out.println();
-	        }
-	    }
-		maze[heroY][heroX] = 2; // héros
-        maze[ennemiY][ennemiX] = 3; // ennemi
+        while (!queue.isEmpty()) {
+            int[] curr = queue.poll();
+            int r = curr[0], c = curr[1];
+            int[][] neighbors = {{r - 1, c}, {r + 1, c}, {r, c - 1}, {r, c + 1}};
 
-	
-// Déplace le héros selon la touche pressée
-    	
-    // Déplace l’ennemi d’une case vers le héros
-    	private void deplacerEnnemi() {
-        	maze[ennemiY][ennemiX] = 0;
+            for (int[] n : neighbors) {
+                int nr = n[0], nc = n[1];
+                if (nr > 0 && nr < rows - 1 && nc > 0 && nc < cols - 1 &&
+                    maze[nr][nc] == PATH && !visited[nr][nc]) {
+                    visited[nr][nc] = true;
+                    queue.add(new int[]{nr, nc});
+                }
+            }
+        }
+    }
 
-        	int dx = Integer.compare(heroX, ennemiX); // -1, 0 ou 1
-        	int dy = Integer.compare(heroY, ennemiY);
+    private static void carvePath(int[] from, int[] to) {
+        int r = from[0];
+        int c = from[1];
 
-        	int nouvelleX = ennemiX;
-        	int nouvelleY = ennemiY;
+        while (c != to[1]) {
+            maze[r][c] = PATH;
+            c += (to[1] > c) ? 1 : -1;
+        }
+        while (r != to[0]) {
+            maze[r][c] = PATH;
+            r += (to[0] > r) ? 1 : -1;
+        }
+    }
 
-        // On essaie de bouger vers le héros (priorité sur l'axe X)
-        	if (Math.abs(heroX - ennemiX) > Math.abs(heroY - ennemiY)) {
-            	if (estValide(ennemiX + dx, ennemiY)) {
-                	nouvelleX += dx;
-            	} else if (estValide(ennemiX, ennemiY + dy)) {
-                	nouvelleY += dy;
-            	}
-        	} else {
-            	if (estValide(ennemiX, ennemiY + dy)) {
-                	nouvelleY += dy;
-            	} else if (estValide(ennemiX + dx, ennemiY)) {
-                	nouvelleX += dx;
-            	}
-        	}
+    // ========================================
+    // FONCTIONS DE LOGIQUE DE JEU
+    // ========================================
 
-        	ennemiX = nouvelleX;
-        	ennemiY = nouvelleY;
+    /**
+     * Vérifie si le déplacement est bloqué
+     * Maintenant avec des codes de touches au lieu de strings
+     * 
+     * @param x Position X actuelle
+     * @param y Position Y actuelle
+     * @param keyCode Code de la touche (KeyEvent.VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT)
+     * @param carte Matrice du terrain
+     * @return true si bloqué, false sinon
+     */
+    public static boolean blocage(int x, int y, int keyCode, int[][] carte) {
+        int xSuiv = x;
+        int ySuiv = y;
 
-        // Si l’ennemi touche le héros
-        	if (ennemiX == heroX && ennemiY == heroY) {
-            	JOptionPane.showMessageDialog(this, "💀 L’ennemi vous a attrapé !");
-            	System.exit(0);
-        	}
+        // Calcule la position suivante selon la touche
+        switch (keyCode) {
+            case KeyEvent.VK_UP:
+                ySuiv = y - 1;
+                break;
+            case KeyEvent.VK_DOWN:
+                ySuiv = y + 1;
+                break;
+            case KeyEvent.VK_LEFT:
+                xSuiv = x - 1;
+                break;
+            case KeyEvent.VK_RIGHT:
+                xSuiv = x + 1;
+                break;
+            default:
+                return true;
+        }
 
-        	maze[ennemiY][ennemiX] = 3;
-    	}
+        // Vérifie les limites
+        if (ySuiv < 0 || ySuiv >= carte.length || xSuiv < 0 || xSuiv >= carte[0].length) {
+            return true;
+        }
 
-    // Vérifie si la case est libre (pas un mur)
-    	private boolean blocage(int x, int y) {
-        	return x >= 0 && x < COLONNES && y >= 0 && y < LIGNES && maze[y][x] != 1;
-    	}
+        // Vérifie les murs
+        if (carte[ySuiv][xSuiv] == WALL) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * NOUVELLE FONCTION MOUVEMENT avec touches fléchées
+     * Déplace le héros selon la touche fléchée pressée
+     * 
+     * @param herosX Position X actuelle du héros
+     * @param herosY Position Y actuelle du héros
+     * @param keyCode Code de la touche fléchée (KeyEvent.VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT)
+     * @param carte Matrice du terrain
+     * @return Nouvelles coordonnées [x, y] du héros
+     */
+    public static int[] mouvement(int herosX, int herosY, int keyCode, int[][] carte) {
+        int newX = herosX;
+        int newY = herosY;
+        
+        // Vérifie si le mouvement est possible
+        if (!blocage(herosX, herosY, keyCode, carte)) {
+            // Efface l'ancienne position
+            carte[herosY][herosX] = PATH;
+            
+            // Calcule la nouvelle position selon la flèche pressée
+            switch (keyCode) {
+                case KeyEvent.VK_UP:    // Flèche haut
+                    newY = herosY - 1;
+                    break;
+                case KeyEvent.VK_DOWN:  // Flèche bas
+                    newY = herosY + 1;
+                    break;
+                case KeyEvent.VK_LEFT:  // Flèche gauche
+                    newX = herosX - 1;
+                    break;
+                case KeyEvent.VK_RIGHT: // Flèche droite
+                    newX = herosX + 1;
+                    break;
+            }
+            
+            // Place le héros à sa nouvelle position
+            carte[newY][newX] = HERO;
+        }
+        
+        return new int[]{newX, newY};
+    }
+
+    public static int[] creerEnnemi(int x, int y, int[][] carte) {
+        carte[y][x] = ENEMY;
+        return new int[]{x, y};
+    }
+
+    public static int[] deplacementEnnemi(int ex, int ey, int hx, int hy, int[][] carte) {
+        int newEx = ex;
+        int newEy = ey;
+
+        String direction = null;
+
+        if (Math.abs(hx - ex) > Math.abs(hy - ey)) {
+            if (hx < ex) direction = "gauche";
+            else if (hx > ex) direction = "droite";
+        } else {
+            if (hy < ey) direction = "haut";
+            else if (hy > ey) direction = "bas";
+        }
+
+        if (direction != null && !blocageString(ex, ey, direction, carte)) {
+            carte[ey][ex] = PATH;
+            switch (direction) {
+                case "haut":    newEy--; break;
+                case "bas":     newEy++; break;
+                case "gauche":  newEx--; break;
+                case "droite":  newEx++; break;
+            }
+            carte[newEy][newEx] = ENEMY;
+        }
+
+        return new int[]{newEx, newEy};
+    }
+
+    /**
+     * Version de blocage pour les strings (utilisée par l'ennemi)
+     */
+    private static boolean blocageString(int x, int y, String direction, int[][] carte) {
+        int xSuiv = x;
+        int ySuiv = y;
+
+        switch (direction.toLowerCase()) {
+            case "haut":
+                ySuiv = y - 1;
+                break;
+            case "bas":
+                ySuiv = y + 1;
+                break;
+            case "gauche":
+                xSuiv = x - 1;
+                break;
+            case "droite":
+                xSuiv = x + 1;
+                break;
+            default:
+                return true;
+        }
+
+        if (ySuiv < 0 || ySuiv >= carte.length || xSuiv < 0 || xSuiv >= carte[0].length) {
+            return true;
+        }
+
+        if (carte[ySuiv][xSuiv] == WALL) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static boolean verifierMort(int herosX, int herosY, int ennemiX, int ennemiY) {
+        if (herosX == ennemiX && herosY == ennemiY) {
+            System.out.println("\n==============================");
+            System.out.println("💀💀💀  VOUS ÊTES MORT  💀💀💀");
+            System.out.println("==============================\n");
+            return true;
+        }
+        return false;
+    }
 }
-	    
-
 
 
 
