@@ -25,6 +25,11 @@ public class MazeGenAcces extends JPanel {
     private static JFrame frame;
     private static MazeGenAcces panel;
 
+    // Timer
+    private static JLabel timerLabel;
+    private static int secondesEcoulees = 0;
+    private static Timer timer;
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> afficherMenu());
     }
@@ -83,6 +88,19 @@ public class MazeGenAcces extends JPanel {
         panel.setPreferredSize(new Dimension(cols * CELL_SIZE, rows * CELL_SIZE + 50));
         panel.setFocusable(true);
 
+        // Timer en haut
+        timerLabel = new JLabel("Temps: 0s", SwingConstants.CENTER);
+        timerLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        frame.add(timerLabel, BorderLayout.NORTH);
+
+        // Timer Swing : incrémente chaque seconde
+        secondesEcoulees = 0;
+        timer = new Timer(1000, ev -> {
+            secondesEcoulees++;
+            timerLabel.setText("Temps: " + secondesEcoulees + "s");
+        });
+        timer.start();
+
         panel.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -106,11 +124,13 @@ public class MazeGenAcces extends JPanel {
 
                 if (verifierMort(herosX, herosY, ennemiX, ennemiY)) {
                     jeuEnCours = false;
+                    timer.stop();
                     JOptionPane.showMessageDialog(frame, "💀 GAME OVER 💀", "Défaite", JOptionPane.ERROR_MESSAGE);
                 }
 
                 if (herosX == cols - 2 && herosY == rows - 2) {
                     jeuEnCours = false;
+                    timer.stop();
                     JOptionPane.showMessageDialog(frame, "🎉 VICTOIRE 🎉", "Bravo !", JOptionPane.INFORMATION_MESSAGE);
                 }
 
@@ -118,7 +138,7 @@ public class MazeGenAcces extends JPanel {
             }
         });
 
-        frame.add(panel);
+        frame.add(panel, BorderLayout.CENTER);
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
