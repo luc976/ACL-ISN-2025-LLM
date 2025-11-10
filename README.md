@@ -23,8 +23,10 @@ séance2:
 - 1 fct "mouvmob" ( mouvement des mob utiliser fct blocage pour eviter les collision mur/ les mob se dirige vers le héros  )      Lysandre   FAIT
 - 1 fct "mort" (le perso meure si il est sur la meme case qu'un mob et mettre fin a la partie )                                   Lysandre  FAIT
 
-- 2 fct "chrono" (dure jusqu'a la mort du perso) Lysandre FAIT 
+- 2 fct "chrono" (dure jusqu'a la mort du perso) Lysandre FAIT
+- 2 fct creer un repertoire de 10 maps prédéfinies par niveau
 - 2 fct "tire" (le personnage peut tirer des projectiles qui tue les mob)
+- 2 fct "creer plusieurs monstres après un temps prédéfini"
 - 2 fct "repop" (fait repop les mob mort/ de plus en plus de mob en fonction du chrono)
 
 - 3 fct "recompense" (le personnage peut ramasser des projectiles par terre)
