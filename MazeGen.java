@@ -11,14 +11,14 @@ public class MazeGenAcces extends JPanel {
     private static final int HERO = 2;
     private static final int ENEMY = 3;
 
-    private static int rows = 32;
-    private static int cols = 32;
+    private static int rows;
+    private static int cols;
     private static int[][] maze;
 
-    private static int herosX = 1;
-    private static int herosY = 1;
-    private static int ennemiX = rows/2;
-    private static int ennemiY = cols/2;
+    private static int herosX;
+    private static int herosY;
+    private static int ennemiX;
+    private static int ennemiY;
     private static boolean jeuEnCours = true;
 
     private static final int CELL_SIZE = 15;
@@ -30,10 +30,59 @@ public class MazeGenAcces extends JPanel {
     private static int secondesEcoulees = 0;
     private static Timer timer;
 
+    // Map selection
+    private static String[][] mapsChoisies;
+
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> afficherMenu());
+        SwingUtilities.invokeLater(() -> afficherDifficulte());
     }
 
+    // === FENÊTRE DE DIFFICULTÉ ===
+    private static void afficherDifficulte() {
+        JFrame difficulteFrame = new JFrame("Choisissez la difficulté");
+        difficulteFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        difficulteFrame.setSize(300, 200);
+        difficulteFrame.setLocationRelativeTo(null);
+        difficulteFrame.setLayout(new GridLayout(4, 1, 10, 10));
+
+        JLabel lbl = new JLabel("Sélectionnez la difficulté :", SwingConstants.CENTER);
+        JButton facileBtn = new JButton("Facile");
+        JButton moyenBtn = new JButton("Moyen");
+        JButton difficileBtn = new JButton("Difficile");
+
+        facileBtn.addActionListener(e -> {
+            mapsChoisies = maps_facile.maps_facile;
+            rows = 32;
+            cols = 32;
+            difficulteFrame.dispose();
+            afficherMenu();
+        });
+
+        moyenBtn.addActionListener(e -> {
+            mapsChoisies = maps_moyen.maps_moyen;
+            rows = 64;
+            cols = 64;
+            difficulteFrame.dispose();
+            afficherMenu();
+        });
+
+        difficileBtn.addActionListener(e -> {
+            mapsChoisies = maps_difficile.maps_difficile;
+            rows = 128;
+            cols = 128;
+            difficulteFrame.dispose();
+            afficherMenu();
+        });
+
+        difficulteFrame.add(lbl);
+        difficulteFrame.add(facileBtn);
+        difficulteFrame.add(moyenBtn);
+        difficulteFrame.add(difficileBtn);
+
+        difficulteFrame.setVisible(true);
+    }
+
+    // === FENÊTRE DE NIVEAU ===
     private static void afficherMenu() {
         JFrame menuFrame = new JFrame("🎮 Menu du jeu - MazeGen");
         menuFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -41,17 +90,17 @@ public class MazeGenAcces extends JPanel {
         menuFrame.setLocationRelativeTo(null);
         menuFrame.setLayout(new GridLayout(6, 1, 10, 10));
 
-        JLabel lblNiveau = new JLabel("Choisissez un niveau (1-10) :", SwingConstants.CENTER);
+        JLabel lblNiveau = new JLabel("Choisissez un niveau :", SwingConstants.CENTER);
         JComboBox<Integer> niveauBox = new JComboBox<>();
-        for (int i = 1; i <= 10; i++) niveauBox.addItem(i);
+        for (int i = 1; i <= mapsChoisies.length; i++) niveauBox.addItem(i);
 
         JButton jouerBtn = new JButton("🚀 Jouer !");
         jouerBtn.addActionListener(e -> {
             int niveauChoisi = (int) niveauBox.getSelectedItem();
 
-            // Charger la map prédéfinie depuis maps_facile
+            // Charger la map choisie
             maze = new int[rows][cols];
-            String[] mapSelectionnee = maps_facile.maps_facile[niveauChoisi - 1];
+            String[] mapSelectionnee = mapsChoisies[niveauChoisi - 1];
             for (int i = 0; i < rows; i++) {
                 for (int j = 0; j < cols; j++) {
                     char c = mapSelectionnee[i].charAt(j);
@@ -62,7 +111,7 @@ public class MazeGenAcces extends JPanel {
             // Initialiser héros et ennemi
             herosX = 1; herosY = 1;
             maze[herosY][herosX] = HERO;
-            int[] ennemiCoord = creerEnnemi(rows/2, cols/2, maze);
+            int[] ennemiCoord = creerEnnemi(rows / 2, cols / 2, maze);
             ennemiX = ennemiCoord[0];
             ennemiY = ennemiCoord[1];
 
@@ -80,6 +129,7 @@ public class MazeGenAcces extends JPanel {
         menuFrame.setVisible(true);
     }
 
+    // === CRÉATION DE LA FENÊTRE DU JEU ===
     private static void createAndShowGUI() {
         frame = new JFrame("Maze Game 🧩 - Utilisez les flèches");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -93,7 +143,6 @@ public class MazeGenAcces extends JPanel {
         timerLabel.setFont(new Font("Arial", Font.BOLD, 16));
         frame.add(timerLabel, BorderLayout.NORTH);
 
-        // Timer Swing : incrémente chaque seconde
         secondesEcoulees = 0;
         timer = new Timer(1000, ev -> {
             secondesEcoulees++;
