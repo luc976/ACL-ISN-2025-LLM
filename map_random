@@ -14,6 +14,10 @@ public class MazeGenAcces extends JPanel {
     private static final int ENEMY = 3;
 
     // === VARIABLES GLOBALES ===
+    static ArrayList<Projectile> projectiles = new ArrayList<>();
+    static int munitions = 5;
+    static Random rand = new Random();
+
     private static int rows;
     private static int cols;
     private static double initialWallChance = 0.45;
@@ -441,6 +445,124 @@ public class MazeGenAcces extends JPanel {
 
         return carte[ySuiv][xSuiv] == WALL;
     }
+    
+
+
+
+
+    // === CLASSE PROJECTILE
+
+    static class Projectile {
+        int x, y;
+        int dx, dy;
+
+        Projectile(int x, int y, int dx, int dy) {
+            this.x = x;
+            this.y = y;
+            this.dx = dx;
+            this.dy = dy;
+        }
+
+        void move() {
+            x += dx;
+            y += dy;
+        }
+    }
+
+
+
+    // === TIR PROJECTILE
+
+    public static void tirerProjectile(int[][] lab, int[] heroPos, char touche) {
+
+        if (munitions <= 0) {
+            System.out.println("Plus de munitions !");
+            return;
+        }
+
+        int x = heroPos[0];
+        int y = heroPos[1];
+
+        switch (Character.toLowerCase(touche)) {
+            case 'z': projectiles.add(new Projectile(x - 1, y, -1, 0)); break;
+            case 's': projectiles.add(new Projectile(x + 1, y, 1, 0)); break;
+            case 'q': projectiles.add(new Projectile(x, y - 1, 0, -1)); break;
+            case 'd': projectiles.add(new Projectile(x, y + 1, 0, 1)); break;
+            default: return;
+        }
+
+        munitions--;
+        System.out.println("Tir ! Munitions restantes : " + munitions);
+
+        if (munitions == 0) {
+            popMunitions(lab);
+        }
+    }
+
+
+
+
+
+    public static void updateProjectiles(int[][] lab) {
+
+        Iterator<Projectile> it = projectiles.iterator();
+
+        while (it.hasNext()) {
+            Projectile p = it.next();
+            p.move();
+
+            if (p.x < 0 || p.y < 0 || p.x >= lab.length || p.y >= lab[0].length) {
+                it.remove();
+                continue;
+            }
+
+            if (lab[p.x][p.y] == 1) {
+                it.remove();
+                continue;
+            }
+    
+            if (lab[p.x][p.y] == 3) {
+                lab[p.x][p.y] = 0;
+                System.out.println("Ennemi éliminé !");
+                it.remove();
+                continue;
+            }
+        }
+    }
+
+
+
+    // === POP MUNITIONS
+
+    public static void popMunitions(int[][] lab) {
+
+        int x, y;
+
+        do {
+            x = rand.nextInt(lab.length);
+            y = rand.nextInt(lab[0].length);
+        } while (lab[x][y] != 0);
+
+        lab[x][y] = 4;
+        System.out.println("Boîte de munitions apparue en : " + x + "," + y);
+    }
+
+
+
+    // === RAMASSAGE MUNITIONS
+
+    public static void checkPickupMunitions(int[][] lab, int[] heroPos) {
+
+        int x = heroPos[0];
+        int y = heroPos[1];
+
+        if (lab[x][y] == 4) {
+            munitions += 5;
+            lab[x][y] = 2;
+            System.out.println("Munitions ramassées ! Total = " + munitions);
+        }
+    }
+
 
     public static boolean verifierMort(int herosX, int herosY, int ennemiX, int ennemiY) {
         if (herosX == ennemiX && herosY == ennemiY) {
