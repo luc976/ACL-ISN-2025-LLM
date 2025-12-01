@@ -9,9 +9,6 @@ import java.util.Random;
 import java.util.Scanner;
 import javax.swing.*;
 
-
-
-
 public class MazeGenAcces extends JPanel {
 
     // === CONSTANTES DU JEU ===
@@ -19,6 +16,8 @@ public class MazeGenAcces extends JPanel {
     private static final int PATH = 0;
     private static final int HERO = 2;
     private static final int ENEMY = 3;
+    private static final int MUNITION = 4;
+    private static final int EXIT = 5; // Nouvelle constante pour la sortie
 
     // === VARIABLES GLOBALES ===
     private static int rows;
@@ -27,7 +26,7 @@ public class MazeGenAcces extends JPanel {
     private static int[][] maze;
     private static final Random random = new Random();
     static ArrayList<Projectile> projectiles = new ArrayList<>();
-    static int munitions = 5;
+    static int munitions = 5; // Commence avec 5 munitions
     static Random rand = new Random();
     
     // === VARIABLES DE JEU ===
@@ -41,11 +40,12 @@ public class MazeGenAcces extends JPanel {
     private static JFrame frame;
     private static MazeGenAcces panel;
     
-    // === VARIABLES DU TIMER (utilisation explicite de javax.swing.Timer) ===
+    // === VARIABLES DU TIMER ===
     private static JLabel timerLabel;
     private static int secondesEcoulees = 0;
     private static javax.swing.Timer timerAffichage;
     private static javax.swing.Timer timerSpawnEnnemi;
+    private static javax.swing.Timer timerProjectiles; // Timer pour les projectiles
 
     public static void main(String[] args) {
         try (Scanner scanner = new Scanner(System.in)) {
@@ -73,7 +73,7 @@ public class MazeGenAcces extends JPanel {
             maze = doSimulationStep(maze);
         }
         maze[1][1] = PATH;
-        maze[rows - 2][cols - 2] = PATH;
+        maze[rows - 2][cols - 2] = EXIT; // Marquer la sortie
         connectRegions();
 
         // === INITIALISATION DU HÉROS ===
@@ -88,7 +88,7 @@ public class MazeGenAcces extends JPanel {
     }
 
     private static void createAndShowGUI() {
-        frame = new JFrame("Maze Game - Utilisez les fleches pour vous deplacer");
+        frame = new JFrame("Maze Game - FLECHES: bouger | ZQSD: tirer | ECHAP: quitter");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
         panel = new MazeGenAcces();
@@ -96,7 +96,7 @@ public class MazeGenAcces extends JPanel {
         panel.setFocusable(true);
         
         // === CRÉATION DU LABEL TIMER ===
-        timerLabel = new JLabel("Temps: 0s | Ennemis: 1", SwingConstants.CENTER);
+        timerLabel = new JLabel("Temps: 0s | Ennemis: 1 | Munitions: " + munitions, SwingConstants.CENTER);
         timerLabel.setFont(new Font("Arial", Font.BOLD, 16));
         timerLabel.setForeground(Color.DARK_GRAY);
         frame.add(timerLabel, BorderLayout.NORTH);
@@ -105,7 +105,7 @@ public class MazeGenAcces extends JPanel {
         secondesEcoulees = 0;
         timerAffichage = new javax.swing.Timer(1000, e -> {
             secondesEcoulees++;
-            timerLabel.setText("Temps: " + secondesEcoulees + "s | Ennemis: " + ennemis.size());
+            timerLabel.setText("Temps: " + secondesEcoulees + "s | Ennemis: " + ennemis.size() + " | Munitions: " + munitions);
         });
         timerAffichage.start();
         
@@ -113,11 +113,20 @@ public class MazeGenAcces extends JPanel {
         timerSpawnEnnemi = new javax.swing.Timer(10000, e -> {
             if (jeuEnCours) {
                 spawnNouvelEnnemi();
-                timerLabel.setText("Temps: " + secondesEcoulees + "s | Ennemis: " + ennemis.size());
+                timerLabel.setText("Temps: " + secondesEcoulees + "s | Ennemis: " + ennemis.size() + " | Munitions: " + munitions);
                 panel.repaint();
             }
         });
         timerSpawnEnnemi.start();
+        
+        // === TIMER POUR LES PROJECTILES (toutes les 100ms) ===
+        timerProjectiles = new javax.swing.Timer(100, e -> {
+            if (jeuEnCours) {
+                updateProjectiles(maze);
+                panel.repaint();
+            }
+        });
+        timerProjectiles.start();
         
         // === LISTENER CLAVIER ===
         panel.addKeyListener(new KeyAdapter() {
@@ -128,6 +137,17 @@ public class MazeGenAcces extends JPanel {
                 int keyCode = e.getKeyCode();
                 int[] newPos;
                 
+                // Gestion du tir (ZQSD)
+                if (keyCode == KeyEvent.VK_Z || keyCode == KeyEvent.VK_Q || 
+                    keyCode == KeyEvent.VK_S || keyCode == KeyEvent.VK_D) {
+                    char touche = (char) keyCode;
+                    tirerProjectile(maze, new int[]{herosX, herosY}, Character.toLowerCase(touche));
+                    timerLabel.setText("Temps: " + secondesEcoulees + "s | Ennemis: " + ennemis.size() + " | Munitions: " + munitions);
+                    panel.repaint();
+                    return;
+                }
+                
+                // Gestion du mouvement (Flèches)
                 switch (keyCode) {
                     case KeyEvent.VK_UP:
                     case KeyEvent.VK_DOWN:
@@ -136,6 +156,10 @@ public class MazeGenAcces extends JPanel {
                         newPos = mouvement(herosX, herosY, keyCode, maze);
                         herosX = newPos[0];
                         herosY = newPos[1];
+                        
+                        // Vérifier le ramassage de munitions
+                        checkPickupMunitions(maze, new int[]{herosX, herosY});
+                        timerLabel.setText("Temps: " + secondesEcoulees + "s | Ennemis: " + ennemis.size() + " | Munitions: " + munitions);
                         break;
                     case KeyEvent.VK_ESCAPE:
                         System.exit(0);
@@ -156,6 +180,7 @@ public class MazeGenAcces extends JPanel {
                     jeuEnCours = false;
                     timerAffichage.stop();
                     timerSpawnEnnemi.stop();
+                    timerProjectiles.stop();
                     JOptionPane.showMessageDialog(frame, 
                         "GAME OVER!\nTemps survecu: " + secondesEcoulees + "s\nEnnemis: " + ennemis.size(), 
                         "Defaite", JOptionPane.ERROR_MESSAGE);
@@ -166,6 +191,7 @@ public class MazeGenAcces extends JPanel {
                     jeuEnCours = false;
                     timerAffichage.stop();
                     timerSpawnEnnemi.stop();
+                    timerProjectiles.stop();
                     JOptionPane.showMessageDialog(frame, 
                         "VICTOIRE!\nTemps: " + secondesEcoulees + "s\nEnnemis evites: " + ennemis.size(), 
                         "Bravo!", JOptionPane.INFORMATION_MESSAGE);
@@ -237,15 +263,38 @@ public class MazeGenAcces extends JPanel {
                         g.setColor(Color.RED);
                         g.fillOval(x + 2, y + 2, CELL_SIZE - 4, CELL_SIZE - 4);
                         break;
+                    case MUNITION:
+                        g.setColor(Color.WHITE);
+                        g.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+                        g.setColor(Color.GREEN);
+                        g.fillOval(x + 2, y + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+                        break;
+                    case EXIT:
+                        g.setColor(Color.WHITE);
+                        g.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+                        // Dessiner une porte
+                        g.setColor(new Color(139, 69, 19)); // Marron
+                        g.fillRect(x + 3, y + 2, CELL_SIZE - 6, CELL_SIZE - 4);
+                        g.setColor(Color.YELLOW);
+                        g.fillOval(x + CELL_SIZE - 6, y + CELL_SIZE / 2 - 1, 3, 3); // Poignée
+                        break;
                 }
                 g.setColor(Color.LIGHT_GRAY);
                 g.drawRect(x, y, CELL_SIZE, CELL_SIZE);
             }
         }
         
+        // Dessiner les projectiles
+        g.setColor(Color.ORANGE);
+        for (Projectile p : projectiles) {
+            int px = p.y * CELL_SIZE + CELL_SIZE / 2 - 2;
+            int py = p.x * CELL_SIZE + CELL_SIZE / 2 - 2;
+            g.fillOval(px, py, 4, 4);
+        }
+        
         g.setColor(Color.BLACK);
-        g.drawString("Heros: (" + herosX + ", " + herosY + ")  |  Ennemis: " + ennemis.size(), 10, rows * CELL_SIZE + 20);
-        g.drawString("FLECHES: bouger | ECHAP: quitter | Sortie: coin bas-droite", 10, rows * CELL_SIZE + 40);
+        g.drawString("Heros: (" + herosX + ", " + herosY + ")  |  Ennemis: " + ennemis.size() + "  |  Munitions: " + munitions, 10, rows * CELL_SIZE + 20);
+        g.drawString("FLECHES: bouger | ZQSD: tirer | ECHAP: quitter | Porte: coin bas-droite", 10, rows * CELL_SIZE + 40);
         
         int distanceMin = Integer.MAX_VALUE;
         for (int[] ennemi : ennemis) {
@@ -383,7 +432,7 @@ public class MazeGenAcces extends JPanel {
             for (int[] n : neighbors) {
                 int nr = n[0], nc = n[1];
                 if (nr > 0 && nr < rows - 1 && nc > 0 && nc < cols - 1 &&
-                    maze[nr][nc] == PATH && !visited[nr][nc]) {
+                    maze[nr][nc] != WALL && !visited[nr][nc]) {
                     visited[nr][nc] = true;
                     queue.add(new int[]{nr, nc});
                 }
@@ -429,14 +478,21 @@ public class MazeGenAcces extends JPanel {
                 case KeyEvent.VK_LEFT:  newX = herosX - 1; break;
                 case KeyEvent.VK_RIGHT: newX = herosX + 1; break;
             }
-            carte[newY][newX] = HERO;
+            // Ne pas écraser la sortie
+            if (carte[newY][newX] != EXIT) {
+                carte[newY][newX] = HERO;
+            } else {
+                carte[newY][newX] = HERO; // Le héros peut être sur la sortie
+            }
         }
         return new int[]{newX, newY};
     }
 
     public static void creerEnnemi(int x, int y, int[][] carte) {
-        carte[y][x] = ENEMY;
-        ennemis.add(new int[]{x, y});
+        if (carte[y][x] != EXIT) {
+            carte[y][x] = ENEMY;
+            ennemis.add(new int[]{x, y});
+        }
     }
 
     public static int[] deplacementEnnemi(int ex, int ey, int hx, int hy, int[][] carte) {
@@ -452,14 +508,18 @@ public class MazeGenAcces extends JPanel {
         }
 
         if (!direction.isEmpty() && !blocageString(ex, ey, direction, carte)) {
-            carte[ey][ex] = PATH;
+            if (carte[ey][ex] != EXIT) {
+                carte[ey][ex] = PATH;
+            }
             switch (direction) {
                 case "haut":    newEy--; break;
                 case "bas":     newEy++; break;
                 case "gauche":  newEx--; break;
                 case "droite":  newEx++; break;
             }
-            carte[newEy][newEx] = ENEMY;
+            if (carte[newEy][newEx] != EXIT) {
+                carte[newEy][newEx] = ENEMY;
+            }
         }
         return new int[]{newEx, newEy};
     }
@@ -489,6 +549,7 @@ public class MazeGenAcces extends JPanel {
         }
         return false;
     }
+
     // ======================
     // === CLASSE PROJECTILE
     // ======================
@@ -509,25 +570,23 @@ public class MazeGenAcces extends JPanel {
         }
     }
 
-
     // ======================
     // === TIR PROJECTILE
     // ======================
-    public static void tirerProjectile(int[][] lab, int[] heroPos, char touche) {
-
+    public static void tirerProjectile(int[][] maze, int[] heroPos, char touche) {
         if (munitions <= 0) {
             System.out.println("Plus de munitions !");
             return;
         }
 
-        int x = heroPos[0];
-        int y = heroPos[1];
+        int x = heroPos[1]; // Attention: inversion pour correspondre à [row][col]
+        int y = heroPos[0];
 
-        switch (Character.toLowerCase(touche)) {
-            case 'z': projectiles.add(new Projectile(x - 1, y, -1, 0)); break;
-            case 's': projectiles.add(new Projectile(x + 1, y, 1, 0)); break;
-            case 'q': projectiles.add(new Projectile(x, y - 1, 0, -1)); break;
-            case 'd': projectiles.add(new Projectile(x, y + 1, 0, 1)); break;
+        switch (touche) {
+            case 'z': projectiles.add(new Projectile(x - 1, y, -1, 0)); break; // Haut
+            case 's': projectiles.add(new Projectile(x + 1, y, 1, 0)); break;  // Bas
+            case 'q': projectiles.add(new Projectile(x, y - 1, 0, -1)); break; // Gauche
+            case 'd': projectiles.add(new Projectile(x, y + 1, 0, 1)); break;  // Droite
             default: return;
         }
 
@@ -535,72 +594,78 @@ public class MazeGenAcces extends JPanel {
         System.out.println("Tir ! Munitions restantes : " + munitions);
 
         if (munitions == 0) {
-            popMunitions(lab);
+            popMunitions(maze);
         }
     }
-
 
     // ======================
     // === MISE À JOUR PROJOS
     // ======================
-    public static void updateProjectiles(int[][] lab) {
-
+    public static void updateProjectiles(int[][] maze) {
         Iterator<Projectile> it = projectiles.iterator();
 
         while (it.hasNext()) {
             Projectile p = it.next();
             p.move();
 
-            if (p.x < 0 || p.y < 0 || p.x >= lab.length || p.y >= lab[0].length) {
+            // Vérifier les limites
+            if (p.x < 0 || p.y < 0 || p.x >= maze.length || p.y >= maze[0].length) {
                 it.remove();
                 continue;
             }
 
-            if (lab[p.x][p.y] == 1) {
+            // Vérifier collision avec mur
+            if (maze[p.x][p.y] == WALL) {
                 it.remove();
                 continue;
             }
 
-            if (lab[p.x][p.y] == 3) {
-                lab[p.x][p.y] = 0;
-                System.out.println("Ennemi éliminé !");
-                it.remove();
-                continue;
+            // Vérifier collision avec ennemi
+            for (int i = 0; i < ennemis.size(); i++) {
+                int[] ennemi = ennemis.get(i);
+                if (p.y == ennemi[0] && p.x == ennemi[1]) {
+                    maze[p.x][p.y] = PATH;
+                    ennemis.remove(i);
+                    System.out.println("Ennemi éliminé ! Restants: " + ennemis.size());
+                    it.remove();
+                    break;
+                }
             }
         }
     }
-
 
     // ======================
     // === POP MUNITIONS
     // ======================
-    public static void popMunitions(int[][] lab) {
-
+    public static void popMunitions(int[][] maze) {
         int x, y;
+        int tentatives = 0;
 
         do {
-            x = rand.nextInt(lab.length);
-            y = rand.nextInt(lab[0].length);
-        } while (lab[x][y] != 0);
+            x = rand.nextInt(maze.length - 2) + 1;
+            y = rand.nextInt(maze[0].length - 2) + 1;
+            tentatives++;
+            if (tentatives > 1000) {
+                System.out.println("Impossible de placer les munitions !");
+                return;
+            }
+        } while (maze[x][y] != PATH);
 
-        lab[x][y] = 4;
-        System.out.println("Boîte de munitions apparue en : " + x + "," + y);
+        maze[x][y] = MUNITION;
+        System.out.println("Boîte de munitions apparue en : (" + y + "," + x + ")");
     }
-
 
     // ======================
     // === RAMASSAGE MUNITIONS
     // ======================
-    public static void checkPickupMunitions(int[][] lab, int[] heroPos) {
-
+    public static void checkPickupMunitions(int[][] maze, int[] heroPos) {
         int x = heroPos[0];
         int y = heroPos[1];
 
-        if (lab[x][y] == 4) {
+        if (maze[y][x] == MUNITION) {
             munitions += 5;
-            lab[x][y] = 2;
+            maze[y][x] = HERO;
             System.out.println("Munitions ramassées ! Total = " + munitions);
         }
+    }
 }
-}
-
