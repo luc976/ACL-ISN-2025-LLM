@@ -1,3 +1,4 @@
+package maze.game;
 public class FastEnemy extends Enemy {
     FastEnemy(int x,int y){ super(x,y); }
     @Override
@@ -11,3 +12,4 @@ public class FastEnemy extends Enemy {
         }
     }
 }
+
