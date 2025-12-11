@@ -1,3 +1,4 @@
+package maze.game;
 public class maps_moyen {
 
     public static final String[][] maps_moyen = {
@@ -674,4 +675,5 @@ public class maps_moyen {
         }
     };
     
+
 }
