@@ -1,3 +1,4 @@
+package maze.game;
 import java.awt.*;
 
 public class PowerUp {
@@ -25,3 +26,4 @@ public class PowerUp {
         }
     }
 }
+
