@@ -1,3 +1,4 @@
+package maze.game;
 public class Projectile {
     int x, y;
     int dirX, dirY;
@@ -31,3 +32,4 @@ public class Projectile {
         y = newY;
     }
 }
+
