@@ -1,3 +1,4 @@
+package maze.game;
 import java.awt.Graphics;
 
 public class FloatingText {
@@ -25,3 +26,4 @@ public class FloatingText {
         g.drawString(text, x, y);
     }
 }
+
