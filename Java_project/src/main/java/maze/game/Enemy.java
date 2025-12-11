@@ -1,4 +1,4 @@
-
+package maze.game;
 
 public class Enemy {
     public int x, y;          // current grid position
@@ -33,3 +33,4 @@ public class Enemy {
         return maze[ny][nx] != MazeGenAccesTrial.WALL;
     }
 }
+
