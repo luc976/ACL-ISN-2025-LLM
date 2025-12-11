@@ -1,3 +1,4 @@
+package maze.game;
 public class TankEnemy extends Enemy {
     private int hp;
 	TankEnemy(int x,int y){ super(x,y); hp=2; }
@@ -9,3 +10,4 @@ public class TankEnemy extends Enemy {
         else if(y>hy && maze[y-1][x]!=MazeGenAccesTrial.WALL) y--;
     }
 }
+
