@@ -1,3 +1,4 @@
+package maze.game;
 public class NormalEnemy extends Enemy {
     NormalEnemy(int x,int y){ super(x,y); }
     @Override
@@ -8,3 +9,4 @@ public class NormalEnemy extends Enemy {
         else if(y>hy && maze[y-1][x]!=MazeGenAccesTrial.WALL) y--;
     }
 }
+
