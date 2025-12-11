@@ -1,3 +1,4 @@
+package maze.game;
 public class maps_facile {
 
 	public static final String[][] maps_facile = {
@@ -358,4 +359,5 @@ public class maps_facile {
         "00000000000000000000000000000000"
     	}
     };
+
 }
