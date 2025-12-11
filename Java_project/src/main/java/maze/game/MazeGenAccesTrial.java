@@ -1,3 +1,4 @@
+package maze.game;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
@@ -756,3 +757,4 @@ public class MazeGenAccesTrial extends JPanel {
     }
 
 }
+
