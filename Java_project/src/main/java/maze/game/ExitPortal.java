@@ -1,6 +1,7 @@
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Random;
+package maze.game;
 
 public class ExitPortal {
     int x,y;
@@ -35,3 +36,4 @@ public class ExitPortal {
         g.fillOval(x*cell - (s-cell)/2, y*cell - (s-cell)/2, s, s);
     }
 }
+
